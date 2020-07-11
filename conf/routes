@@ -5,7 +5,11 @@
 
 module:testrunner
 # module:jobs
-
+GET /people PersonController.Index
+POST /people PersonController.Create
+PUT /people/:id PersonController.Update
+GET /people/:id PersonController.Show
+DELETE /people/:id PersonController.Delete
 
 GET     /                                       App.Index
 

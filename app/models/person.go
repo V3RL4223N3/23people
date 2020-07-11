@@ -1,18 +1,19 @@
 package models
 
 import (
-	"23people/app/models/mongodb"
+	"fmt"
+	"github.com/V3RL4223N3/23people/app/models/mongodb"
 	"gopkg.in/mgo.v2/bson"
 	"time"
 )
 
 type Person struct {
 	ID         bson.ObjectId `json:"id" bson:"_id"`
-	NationalId int           `json:"national_id" bson:"national_id"`
+	NationalId string        `json:"nationalId" bson:"national_id"`
 	Name       string        `json:"name" bson:"name"`
-	LastName   string        `json:"last_name" bson:"last_name"`
+	LastName   string        `json:"lastName" bson:"last_name"`
 	Age        int           `json:"age" bson:"age"`
-	PictureUrl string        `json:"picture_url" bson:"picture_url"`
+	PictureUrl string        `json:"pictureUrl" bson:"picture_url"`
 	CreatedAt  time.Time     `json:"created_at" bson:"created_at"`
 	UpdatedAt  time.Time     `json:"updated_at" bson:"updated_at"`
 }
@@ -28,17 +29,31 @@ func AddPerson(m Person) (person Person, err error) {
 	defer c.Close()
 	m.ID = bson.NewObjectId()
 	m.CreatedAt = time.Now()
-	return m, c.Session.Insert(m)
+	checkPerson, err := GetPerson(m.NationalId)
+
+	if err != nil {
+		if checkPerson.NationalId == "" {
+			return m, c.Session.Insert(m)
+		}
+
+	}
+
+	return m, err
 }
 
 // UpdatePerson update a Person into database and returns
 // last nil on success.
-func (m Person) UpdatePerson() error {
+func (m Person) UpdatePerson(id string) error {
 	c := newPersonCollection()
 	defer c.Close()
 
-	err := c.Session.Update(bson.M{
-		"_id": m.ID,
+	var person Person
+	fmt.Println(m.NationalId)
+
+	err := c.Session.Find(bson.M{"national_id": id}).One(&person)
+
+	err = c.Session.Update(bson.M{
+		"national_id": m.NationalId,
 	}, bson.M{
 		"$set": bson.M{
 			"national_id": m.NationalId, "name": m.Name, "last_name": m.LastName, "age": m.Age, "picture_url": m.PictureUrl, "updatedAt": time.Now()},
@@ -73,7 +88,7 @@ func GetPersons() ([]Person, error) {
 
 // GetPerson Get a Person from database and returns
 // a Person on success
-func GetPerson(id bson.ObjectId) (Person, error) {
+func GetPerson(id string) (Person, error) {
 	var (
 		person Person
 		err    error
@@ -81,7 +96,6 @@ func GetPerson(id bson.ObjectId) (Person, error) {
 
 	c := newPersonCollection()
 	defer c.Close()
-
-	err = c.Session.Find(bson.M{"_id": id}).One(&person)
+	err = c.Session.Find(bson.M{"national_id": id}).One(&person)
 	return person, err
 }
