@@ -84,6 +84,14 @@ func (c PersonController) Update(id string) revel.Result {
 		person models.Person
 		err    error
 	)
+
+	_, err = models.GetPerson(id)
+	if err != nil {
+		errResp := buildErrResponse(err, "404")
+		c.Response.Status = 400
+		return c.RenderJSON(errResp)
+	}
+
 	err = c.Params.BindJSON(&person)
 	if err != nil {
 		errResp := buildErrResponse(err, "400")
@@ -122,8 +130,8 @@ func (c PersonController) Delete(id string) revel.Result {
 
 	person, err = models.GetPerson(id)
 	if err != nil {
-		errResp := buildErrResponse(err, "500")
-		c.Response.Status = 500
+		errResp := buildErrResponse(err, "404")
+		c.Response.Status = 404
 		return c.RenderJSON(errResp)
 	}
 	err = person.DeletePerson()
@@ -132,6 +140,6 @@ func (c PersonController) Delete(id string) revel.Result {
 		c.Response.Status = 500
 		return c.RenderJSON(errResp)
 	}
-	c.Response.Status = 204
+	c.Response.Status = 200
 	return c.RenderJSON(nil)
 }
